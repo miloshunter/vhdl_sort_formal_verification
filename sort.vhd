@@ -47,11 +47,13 @@ begin  -- architecture rtl
       if ain_tvalid = '1' and ain_tready = '1' then
 
         cnt := 0;
-        for i in first_el to first_el+len loop
-          if ain_tdata > arr(i) then
-            cnt      := cnt + 1;
-            arr(i-1) <= arr(i);
-          end if;
+        for i in 1 to MAX_LEN loop
+            if (i >= first_el) and (i <= first_el + len) then
+              if ain_tdata > arr(i) then
+                cnt      := cnt + 1;
+                arr(i-1) <= arr(i);
+              end if;
+            end if;
         end loop;  -- i
 
         arr(first_el -1 + cnt) <= ain_tdata;
