@@ -6,16 +6,16 @@ entity sort is
 
   generic (
     WIDTH   : natural := 16;
-    MAX_LEN : natural := 10);
+    MAX_LEN : natural := 100);
 
   port (
     clk   : in std_logic;
     reset : in std_logic;
 
-    ain_tvalid : in std_logic;
-    ain_tready : in std_logic;
-    ain_tdata  : in std_logic_vector(WIDTH-1 downto 0);
-    ain_tlast  : in std_logic;
+    ain_tvalid : in  std_logic;
+    ain_tready : out std_logic;
+    ain_tdata  : in  std_logic_vector(WIDTH-1 downto 0);
+    ain_tlast  : in  std_logic;
 
     aout_tvalid : out std_logic;
     aout_tready : in  std_logic;
@@ -31,6 +31,9 @@ architecture rtl of sort is
   signal arr      : my_array := (others => (others => '0'));
   signal first_el : integer  := MAX_LEN;
   signal len      : integer  := 0;
+  type state_t is (s_idle, s_sorting, s_output);
+  signal state    : state_t  := s_idle;
+  signal out_cnt  : integer  := 0;
 
 begin  -- architecture rtl
 
@@ -44,31 +47,71 @@ begin  -- architecture rtl
 
     elsif clk'event and clk = '1' then  -- rising clock edge
 
-      if ain_tvalid = '1' and ain_tready = '1' then
+      if state = s_idle then
+        -- ------------------- IDLE
 
-        cnt := 0;
+        arr         <= (others => (others => '0'));
+        first_el    <= MAX_LEN;
+        len         <= 0;
+        out_cnt     <= 0;
+        aout_tlast  <= '0';
+        aout_tdata  <= (others => '0');
+        aout_tvalid <= '0';
+
+
+        if ain_tvalid = '1' then
+          state <= s_sorting;
+        end if;
+
+
+      elsif state = s_sorting and ain_tvalid = '1' then
+        -- ------------------- SORTING
+
+        cnt        := 0;
+        ain_tready <= '1';
         for i in 1 to MAX_LEN loop
-            if (i >= first_el) and (i <= first_el + len) then
-              if ain_tdata > arr(i) then
-                cnt      := cnt + 1;
-                arr(i-1) <= arr(i);
-              end if;
+          if (i >= first_el) and (i <= first_el + len) then
+            if ain_tdata > arr(i) then
+              cnt      := cnt + 1;
+              arr(i-1) <= arr(i);
             end if;
+          end if;
         end loop;  -- i
 
         arr(first_el -1 + cnt) <= ain_tdata;
 
         first_el <= first_el - 1;
         len      <= len + 1;
-      else
+
+        if ain_tlast = '1' then
+          out_cnt <= first_el;
+          state   <= s_output;
+        end if;
+
+
+
+      elsif state = s_output then
+        -- ------------------- OUTPUT
+
+
+
+        ain_tready  <= '0';
+        aout_tdata  <= arr(out_cnt);
         aout_tvalid <= '1';
+        if (aout_tready = '1') then
+          out_cnt <= out_cnt + 1;
+        end if;
+
+        if out_cnt = (first_el + len) then
+          aout_tlast <= '1';
+          state      <= s_idle;
+
+        end if;
 
       end if;
 
     end if;
   end process sync_sort;
-
-  aout_tdata <= arr(MAX_LEN/2);
 
 
 end architecture rtl;
