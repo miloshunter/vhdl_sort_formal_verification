@@ -60,15 +60,15 @@ begin  -- architecture rtl
 
 
         if ain_tvalid = '1' then
-          state <= s_sorting;
+          state      <= s_sorting;
+          ain_tready <= '1';
         end if;
 
 
       elsif state = s_sorting and ain_tvalid = '1' then
         -- ------------------- SORTING
 
-        cnt        := 0;
-        ain_tready <= '1';
+        cnt := 0;
         for i in 1 to MAX_LEN loop
           if (i >= first_el) and (i <= first_el + len) then
             if ain_tdata > arr(i) then
@@ -84,8 +84,10 @@ begin  -- architecture rtl
         len      <= len + 1;
 
         if ain_tlast = '1' then
-          out_cnt <= first_el;
-          state   <= s_output;
+          out_cnt    <= first_el + 1;
+          aout_tdata <= arr(first_el);
+          state      <= s_output;
+          ain_tready <= '0';
         end if;
 
 
@@ -96,10 +98,10 @@ begin  -- architecture rtl
 
 
         ain_tready  <= '0';
-        aout_tdata  <= arr(out_cnt);
         aout_tvalid <= '1';
         if (aout_tready = '1') then
-          out_cnt <= out_cnt + 1;
+          out_cnt    <= out_cnt + 1;
+          aout_tdata <= arr(out_cnt);
         end if;
 
         if out_cnt = (first_el + len) then
