@@ -33,8 +33,16 @@ architecture simulating_process of test_proc is
   type state_t is (s_idle, s_write, s_wait, s_read);
   signal state : state_t := s_idle;
 
-  signal length : integer := 0;
-  signal cnt    : integer := 0;
+  signal length : natural := 0;
+  signal cnt    : natural := 0;
+
+  -- psl P_check_intready: assert always ( {ain_tvalid='0';ain_tvalid='1'} |-> eventually! (ain_tready='1') );
+  -- psl P_check_intlast: assert always ( {ain_tvalid='1' and ain_tready='1';ain_tvalid='0' and ain_tready='0'} |-> prev(prev(ain_tlast='0')) and prev(ain_tlast='1') and ain_tlast='0' );
+
+  -- psl P_check_outtready: assert always ( {aout_tvalid='0';aout_tvalid='1'} |-> eventually! (aout_tready='1') );
+  -- psl P_check_outtlast: assert always ( {aout_tvalid='1' and aout_tready='1';aout_tvalid='0' and aout_tready='0'} |-> prev(prev(aout_tlast='0')) and prev(aout_tlast='1') and aout_tlast='0' );
+
+  -- psl P_check_if_sorted: assert always ( ( aout_tvalid='1' and aout_tready='1') |-> (aout_tdata >= prev(aout_tdata))  );
 
 begin  -- architecture simulating_process
 
@@ -44,6 +52,8 @@ begin  -- architecture simulating_process
       cnt    <= 0;
       length <= 0;
       state  <= s_idle;
+      ain_tlast <= '0';
+      ain_tvalid <= '0';
 
     elsif clk'event and clk = '1' then  -- rising clock edge
 
@@ -53,7 +63,7 @@ begin  -- architecture simulating_process
         when s_idle =>
 
           if rand_operation = "010" then
-            length <= to_integer(unsigned(rand_length));
+            length <= to_integer(unsigned(rand_length)) + 1;
             cnt    <= 0;
             state  <= s_write;
           end if;

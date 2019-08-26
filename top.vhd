@@ -3,14 +3,22 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity top is
+	generic (
+    WIDTH   : natural := 16;
+    MAX_LEN : natural := 20);
+  port (
+    clk   : in std_logic;
+    reset : in std_logic;
+
+    rand_operation : in std_logic_vector(2 downto 0);
+    rand_length    : in std_logic_vector(3 downto 0);
+    rand_num       : in std_logic_vector(WIDTH-1 downto 0)
+    );
+
 end entity top;
 
 architecture rtl of top is
-  constant WIDTH   : natural := 16;
-  constant MAX_LEN : natural := 100;
-
-  signal clk            : std_logic;
-  signal reset          : std_logic;
+  
   signal ain_tvalid     : std_logic;
   signal ain_tready     : std_logic;
   signal ain_tdata      : std_logic_vector(WIDTH-1 downto 0);
@@ -19,9 +27,7 @@ architecture rtl of top is
   signal aout_tready    : std_logic;
   signal aout_tdata     : std_logic_vector(WIDTH-1 downto 0);
   signal aout_tlast     : std_logic;
-  signal rand_operation : std_logic_vector(2 downto 0);
-  signal rand_length    : std_logic_vector(3 downto 0);
-  signal rand_num       : std_logic_vector(WIDTH-1 downto 0);
+  
 begin  -- architecture rtl
   test_proc_1 : entity work.test_proc
     generic map (

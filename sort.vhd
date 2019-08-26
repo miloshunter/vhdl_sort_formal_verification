@@ -29,11 +29,11 @@ end entity sort;
 architecture rtl of sort is
   type my_array is array (0 to MAX_LEN) of std_logic_vector(WIDTH-1 downto 0);
   signal arr      : my_array := (others => (others => '0'));
-  signal first_el : integer  := MAX_LEN;
-  signal len      : integer  := 0;
+  signal first_el : natural  := MAX_LEN;
+  signal len      : natural  := 0;
   type state_t is (s_idle, s_sorting, s_output);
   signal state    : state_t  := s_idle;
-  signal out_cnt  : integer  := 0;
+  signal out_cnt  : natural  := 0;
 
 begin  -- architecture rtl
 
@@ -41,9 +41,14 @@ begin  -- architecture rtl
     variable cnt : integer := 0;
   begin  -- process sync_sort
     if reset = '1' then                 -- asynchronous reset (active high)
+      state <= s_idle;
       arr      <= (others => (others => '0'));
       first_el <= MAX_LEN;
       len      <= 0;
+      out_cnt  <= 0;
+      aout_tlast <= '0';
+      aout_tdata <= (others => '0');
+      aout_tvalid <= '0';
 
     elsif clk'event and clk = '1' then  -- rising clock edge
 
